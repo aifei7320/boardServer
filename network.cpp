@@ -28,7 +28,8 @@ void Network::init()
         mcuTcpSocketList.append(new QTcpSocket);
         mcuTcpSocketList[i]->setObjectName(QString::number(i));
         mcuTcpSocketList[i]->connectToHost("192.168.0.32", 4000 + i);
-        connect(mcuTcpSocketList[i], SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(networkError(QAbstractSocket::SocketError)));
+        connect(mcuTcpSocketList[i], SIGNAL(error(QAbstractSocket::SocketError)),
+                this, SLOT(networkError(QAbstractSocket::SocketError)));
         connect(mcuTcpSocketList[i], SIGNAL(readyRead()), this, SLOT(readMCUData()));
 
         qDebug()<<"create socket";

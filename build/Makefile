@@ -203,7 +203,6 @@ DIST          = ../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_pre.prf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/qt_config.prf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/linux-g++/qmake.conf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_post.prf \
-		../../.qmake.stash \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/exclusive_builds.prf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/toolchain.prf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/default_pre.prf \
@@ -385,7 +384,6 @@ Makefile: ../boardServer.pro ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_p
 		../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/qt_config.prf \
 		../../../Qt5.8.0/5.8/gcc_64/mkspecs/linux-g++/qmake.conf \
 		../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_post.prf \
-		../.qmake.stash \
 		../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/exclusive_builds.prf \
 		../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/toolchain.prf \
 		../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/default_pre.prf \
@@ -561,7 +559,6 @@ Makefile: ../boardServer.pro ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_p
 ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/qt_config.prf:
 ../../../Qt5.8.0/5.8/gcc_64/mkspecs/linux-g++/qmake.conf:
 ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_post.prf:
-../.qmake.stash:
 ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/exclusive_builds.prf:
 ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/toolchain.prf:
 ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/default_pre.prf:
@@ -612,6 +609,7 @@ clean: compiler_clean
 
 distclean: clean 
 	-$(DEL_FILE) $(TARGET) 
+	-$(DEL_FILE) .qmake.stash
 	-$(DEL_FILE) Makefile
 
 
