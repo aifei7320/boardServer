@@ -11,6 +11,10 @@ using namespace std;
 
 #include "network.h"
 
+QSemaphore readSema(0);
+QSemaphore writeSema(100);
+QQueue<QByteArray> resource;
+
 Network::Network(QObject *parent) : QObject(parent),
     phoneServer(new QTcpServer)
 {
@@ -61,7 +65,8 @@ void Network::getPhoneInfo()
     while(transferSocket->bytesAvailable() < infoLength);
     phoneInfo = transferSocket->read(infoLength);
 
-    ip = QString(phoneInfo.left(phoneInfo.indexOf(":")));
+    ip = transferSocket->peerAddress().toString();
+    ip = ip.right(ip.size() - ip.lastIndexOf(":") - 1);
     port = phoneInfo.mid(phoneInfo.indexOf(":") + 1, phoneInfo.indexOf("@") - phoneInfo.indexOf(":") - 1).toInt();
     dev = phoneInfo.right(phoneInfo.size() - phoneInfo.indexOf("@") - 1).toInt();
     qDebug()<<ip<<port<<dev;
@@ -69,7 +74,7 @@ void Network::getPhoneInfo()
     qDebug()<<phoneInfo.mid(phoneInfo.indexOf(":"), phoneInfo.indexOf("@") - phoneInfo.indexOf(":") - 1).toInt();
     QTcpSocket *tcp = new QTcpSocket;
     tcp->setObjectName(QString::number(dev));
-    tcp->connectToHost("192.168.0.94", port);
+    tcp->connectToHost(ip, port);
     connect(tcp, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(tcpStateChanged(QAbstractSocket::SocketState)));
     transferSocket->disconnectFromHost();
     socketHashTable.insert(dev, tcp);
@@ -105,10 +110,16 @@ void Network::readMCUData()
 {
     QTcpSocket *tcp=NULL;
     QByteArray info;
+    quint8 dev;
     tcp = static_cast<QTcpSocket*>(sender());
-    info = tcp->readAll();
+    info = tcp->read(25);
     qDebug()<< info<<tcp->objectName();
-    tcp->write(info);
+    dev = tcp->objectName().toInt();
+    writeSema.release();
+    if(socketHashTable[dev] != NULL){
+        socketHashTable[dev]->write(info);
+        qDebug()<< info<<tcp->objectName();
+    }
 }
 
 void Network::networkError(QAbstractSocket::SocketError err)
@@ -195,7 +206,30 @@ void Network::networkError(QAbstractSocket::SocketError err)
     }
 }
 
+void Network::testConnection()
+{
+}
+
 void Network::tcpStateChanged(QAbstractSocket::SocketState s)
 {
+    quint8 dev;
+    dev = static_cast<QTcpSocket*>(sender())->objectName().toInt();
+    switch(s){
+        case QAbstractSocket::ConnectedState:
+            break;
+        case QAbstractSocket::ClosingState:
+            socketHashTable.remove(dev);
+            break;
+        case QAbstractSocket::ListeningState:
+            break;
+        case QAbstractSocket::UnconnectedState:
+            break;
+        case QAbstractSocket::ConnectingState:
+            break;
+        case QAbstractSocket::BoundState:
+            break;
+        default:break;
+
+    }
     qDebug()<<s;
 }

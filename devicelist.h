@@ -8,11 +8,21 @@
 #ifndef _DEVICELIST_H_
 #define _DEVICELIST_H_
 
+#include <QWidget>
+#include <QTableView>
+#include <QItemDelegate>
+#include <QString>
+#include <QPushButton>
 #include <iostream>
 #include <unistd.h>
 using namespace std;
 
 
-class DeviceList : public 
+class DeviceList : public QWidget
+{
+    Q_OBJECT
+public:
+    DeviceList(QWidget *parent=0);
+}
 
 #endif

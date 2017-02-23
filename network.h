@@ -24,7 +24,10 @@ using namespace std;
 #include <QDataStream>
 #include <QMetaType>
 #include <QTcpSocket>
+#include <QSemaphore>
+#include <QQueue>
 #include <QList>
+#include <QTimer>
 #include <QHash>
 
 struct boardInfo{
@@ -49,6 +52,7 @@ class Network : public QObject
         QHash<qint32, QTcpSocket*> socketHashTable;
 
         QTcpSocket *transferSocket;
+        QTimer *timer;
     private:
         void init();
 
@@ -61,6 +65,7 @@ class Network : public QObject
         void networkError(QAbstractSocket::SocketError);
         void deleteTransferSocket();
         void tcpStateChanged(QAbstractSocket::SocketState);
+        void testConnection();
     
 };
 
