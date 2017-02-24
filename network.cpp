@@ -67,11 +67,10 @@ void Network::getPhoneInfo()
 
     ip = transferSocket->peerAddress().toString();
     ip = ip.right(ip.size() - ip.lastIndexOf(":") - 1);
-    port = phoneInfo.mid(phoneInfo.indexOf(":") + 1, phoneInfo.indexOf("@") - phoneInfo.indexOf(":") - 1).toInt();
+    port = phoneInfo.left(phoneInfo.indexOf("@")).toInt();
     dev = phoneInfo.right(phoneInfo.size() - phoneInfo.indexOf("@") - 1).toInt();
     qDebug()<<ip<<port<<dev;
     qDebug()<<"peer ip"<<transferSocket->peerAddress().toString();
-    qDebug()<<phoneInfo.mid(phoneInfo.indexOf(":"), phoneInfo.indexOf("@") - phoneInfo.indexOf(":") - 1).toInt();
     QTcpSocket *tcp = new QTcpSocket;
     tcp->setObjectName(QString::number(dev));
     tcp->connectToHost(ip, port);
@@ -108,16 +107,38 @@ void Network::errorOccur(QAbstractSocket::SocketError err)
 
 void Network::readMCUData()
 {
+    struct boardInfo m;
+    m.width = 650;
+    m.length = 952;
+    m.serialNum = "";
+    m.total = 1000;
+    m.ngcount = 5;
+    m.okcount = 995;
+    m.lengthMatch = 0;
+    m.widthMatch = 0;
+    m.boardPerfect = 0;
+    qDebug()<<m.serialNum;
+
     QTcpSocket *tcp=NULL;
+    quint8 header;
     QByteArray info;
     quint8 dev;
     tcp = static_cast<QTcpSocket*>(sender());
+    QDataStream in(tcp);
+    in >> header;
+    if (header != 'M'){
+        tcp->readAll();
+        return;
+    }
+    while(tcp->bytesAvailable()<25);
     info = tcp->read(25);
     qDebug()<< info<<tcp->objectName();
     dev = tcp->objectName().toInt();
     writeSema.release();
     if(socketHashTable[dev] != NULL){
         socketHashTable[dev]->write(info);
+        //QDataStream out(socketHashTable[dev]);
+        //out<< m;
         qDebug()<< info<<tcp->objectName();
     }
 }

@@ -31,12 +31,16 @@ using namespace std;
 #include <QHash>
 
 struct boardInfo{
-    QString serialNum;
+    quint32 magicNum ;
+    char* serialNum;
     quint16 length;
     quint16 width;
     quint32 total;
     quint32 ngcount;
     quint32 okcount;
+    quint8 lengthMatch;
+    quint8 widthMatch;
+    quint8 boardPerfect;
 };
 Q_DECLARE_METATYPE(boardInfo)
 
@@ -72,9 +76,24 @@ class Network : public QObject
 inline QDataStream &operator<<(QDataStream &out, const struct boardInfo &board)
 {
     out.setVersion(QDataStream::Qt_5_0);
-    out<<board.serialNum<< board.length<< board.width<<
-        board.total<< board.ngcount<< board.okcount;
+    out<< 123456<< board.serialNum<< board.length<< board.width<<
+        board.total<< board.ngcount<< board.okcount<< board.lengthMatch<<
+        board.widthMatch<< board.boardPerfect;
     return out;
+}
+
+inline QDataStream &operator>>(QDataStream &in, struct boardInfo &board)
+{
+    in.setVersion(QDataStream::Qt_5_0);
+    in>> board.magicNum;
+    if (board.magicNum != 123456){
+        board.magicNum = 0;
+        return in;
+    }
+    in>>board.serialNum>> board.length>> board.width>>
+        board.total>> board.ngcount>> board.okcount>> board.lengthMatch>>
+        board.widthMatch>> board.boardPerfect;
+    return in;
 }
 
 #endif
