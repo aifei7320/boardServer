@@ -26,21 +26,23 @@ using namespace std;
 #include <QTcpSocket>
 #include <QSemaphore>
 #include <QQueue>
+#include <QVector>
 #include <QList>
 #include <QTimer>
 #include <QHash>
 
 struct boardInfo{
-    quint32 magicNum ;
-    char* serialNum;
-    quint16 length;
-    quint16 width;
-    quint32 total;
-    quint32 ngcount;
-    quint32 okcount;
-    quint8 lengthMatch;
-    quint8 widthMatch;
-    quint8 boardPerfect;
+    qint32 magicNum = -1;
+    QString serialNum;
+    qint16 length = -1;
+    qint16 width = -1;
+    qint32 total = -1;
+    qint32 ngcount = -1;
+    qint32 okcount = -1;
+    qint8 lengthMatch = -1;
+    qint8 widthMatch = -1;
+    qint8 boardPerfect = -1;
+    qint16 devNum = -1;
 };
 Q_DECLARE_METATYPE(boardInfo)
 
@@ -61,7 +63,7 @@ class Network : public QObject
         void init();
 
     private Q_SLOTS:
-        void readMCUData();
+        void readData();
         void getPhoneInfo();
         void establishNewConnection();
         void errorOccur(QAbstractSocket::SocketError);

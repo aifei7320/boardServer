@@ -9,5 +9,9 @@ INCLUDEPATH += .
 QT += core network sql widgets
 
 # Input
-HEADERS += network.h
-SOURCES += main.cpp network.cpp
+HEADERS +=  network.h \
+            database.h \  
+            storage.h
+SOURCES +=  main.cpp \
+            network.cpp \
+            storage.cpp

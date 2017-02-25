@@ -11,11 +11,21 @@ using namespace std;
 
 #include <QApplication>
 #include "network.h"
+#include "database.h"
+#include "storage.h"
 
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
-    Network network;
+    if (!connectToDatabase()){
 
+        app.exit(-1);
+        return -1;
+    }
+    qRegisterMetaType<boardInfo>();
+    Network network;
+    Storage storage;
+    storage.start();
+    app.quitOnLastWindowClosed();
     return app.exec();
 }

@@ -49,10 +49,14 @@ OBJECTS_DIR   = ./
 ####### Files
 
 SOURCES       = ../main.cpp \
-		../network.cpp moc_network.cpp
+		../network.cpp \
+		../storage.cpp moc_network.cpp \
+		moc_storage.cpp
 OBJECTS       = main.o \
 		network.o \
-		moc_network.o
+		storage.o \
+		moc_network.o \
+		moc_storage.o
 DIST          = ../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_pre.prf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/common/unix.conf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/common/linux.conf \
@@ -203,6 +207,7 @@ DIST          = ../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_pre.prf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/qt_config.prf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/linux-g++/qmake.conf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_post.prf \
+		../.qmake.stash \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/exclusive_builds.prf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/toolchain.prf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/default_pre.prf \
@@ -221,8 +226,11 @@ DIST          = ../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_pre.prf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/exceptions.prf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/yacc.prf \
 		../../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/lex.prf \
-		../../boardServer.pro ../network.h ../main.cpp \
-		../network.cpp
+		../../boardServer.pro ../network.h \
+		../database.h \
+		../storage.h ../main.cpp \
+		../network.cpp \
+		../storage.cpp
 QMAKE_TARGET  = boardServer
 DESTDIR       = 
 TARGET        = boardServer
@@ -384,6 +392,7 @@ Makefile: ../boardServer.pro ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_p
 		../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/qt_config.prf \
 		../../../Qt5.8.0/5.8/gcc_64/mkspecs/linux-g++/qmake.conf \
 		../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/exclusive_builds.prf \
 		../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/toolchain.prf \
 		../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/default_pre.prf \
@@ -559,6 +568,7 @@ Makefile: ../boardServer.pro ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_p
 ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/qt_config.prf:
 ../../../Qt5.8.0/5.8/gcc_64/mkspecs/linux-g++/qmake.conf:
 ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/spec_post.prf:
+.qmake.stash:
 ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/exclusive_builds.prf:
 ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/toolchain.prf:
 ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/default_pre.prf:
@@ -598,8 +608,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../network.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../main.cpp ../network.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../network.h ../database.h ../storage.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../main.cpp ../network.cpp ../storage.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -631,9 +641,9 @@ compiler_moc_predefs_clean:
 moc_predefs.h: ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/data/dummy.cpp
 	g++ -pipe -O2 -std=gnu++11 -Wall -W -dM -E -o moc_predefs.h ../../../Qt5.8.0/5.8/gcc_64/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all: moc_network.cpp
+compiler_moc_header_make_all: moc_network.cpp moc_storage.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_network.cpp
+	-$(DEL_FILE) moc_network.cpp moc_storage.cpp
 moc_network.cpp: ../../../Qt5.8.0/5.8/gcc_64/include/QtNetwork/QTcpServer \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtNetwork/qtcpserver.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtNetwork/qtnetworkglobal.h \
@@ -714,6 +724,10 @@ moc_network.cpp: ../../../Qt5.8.0/5.8/gcc_64/include/QtNetwork/QTcpServer \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QMetaType \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtNetwork/QTcpSocket \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtNetwork/qtcpsocket.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QSemaphore \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qsemaphore.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QQueue \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qqueue.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtGui/QList \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtGui/qevent.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtGui/qtguiglobal.h \
@@ -731,11 +745,74 @@ moc_network.cpp: ../../../Qt5.8.0/5.8/gcc_64/include/QtNetwork/QTcpServer \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qfiledevice.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtGui/qvector2d.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtGui/qtouchdevice.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QTimer \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qtimer.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qbasictimer.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QHash \
 		../network.h \
 		moc_predefs.h \
 		../../../Qt5.8.0/5.8/gcc_64/bin/moc
 	/home/hero/Qt5.8.0/5.8/gcc_64/bin/moc $(DEFINES) --include ./moc_predefs.h -I/home/hero/Qt5.8.0/5.8/gcc_64/mkspecs/linux-g++ -I/home/hero/project/boardServer -I/home/hero/project/boardServer -I/home/hero/Qt5.8.0/5.8/gcc_64/include -I/home/hero/Qt5.8.0/5.8/gcc_64/include/QtWidgets -I/home/hero/Qt5.8.0/5.8/gcc_64/include/QtGui -I/home/hero/Qt5.8.0/5.8/gcc_64/include/QtNetwork -I/home/hero/Qt5.8.0/5.8/gcc_64/include/QtSql -I/home/hero/Qt5.8.0/5.8/gcc_64/include/QtCore -I. -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include ../network.h -o moc_network.cpp
+
+moc_storage.cpp: ../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QThread \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qthread.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qobject.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qobjectdefs.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qnamespace.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qglobal.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qconfig-bootstrapped.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qconfig.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qtcore-config.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qsystemdetection.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qprocessordetection.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qcompilerdetection.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qtypeinfo.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qsysinfo.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qlogging.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qflags.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qtypetraits.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qatomic.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qbasicatomic.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qgenericatomic.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qatomic_cxx11.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qatomic_msvc.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qglobalstatic.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qmutex.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qnumeric.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qversiontagging.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qstring.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qchar.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qbytearray.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qrefcount.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qarraydata.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qstringbuilder.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qlist.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qalgorithms.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qiterator.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qhashfunctions.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qpair.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qbytearraylist.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qstringlist.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qregexp.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qstringmatcher.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qcoreevent.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qscopedpointer.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qmetatype.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qvarlengtharray.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qcontainerfwd.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qobject_impl.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QString \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QByteArray \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QSemaphore \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qsemaphore.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QQueue \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qqueue.h \
+		../storage.h \
+		moc_predefs.h \
+		../../../Qt5.8.0/5.8/gcc_64/bin/moc
+	/home/hero/Qt5.8.0/5.8/gcc_64/bin/moc $(DEFINES) --include ./moc_predefs.h -I/home/hero/Qt5.8.0/5.8/gcc_64/mkspecs/linux-g++ -I/home/hero/project/boardServer -I/home/hero/project/boardServer -I/home/hero/Qt5.8.0/5.8/gcc_64/include -I/home/hero/Qt5.8.0/5.8/gcc_64/include/QtWidgets -I/home/hero/Qt5.8.0/5.8/gcc_64/include/QtGui -I/home/hero/Qt5.8.0/5.8/gcc_64/include/QtNetwork -I/home/hero/Qt5.8.0/5.8/gcc_64/include/QtSql -I/home/hero/Qt5.8.0/5.8/gcc_64/include/QtCore -I. -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include ../storage.h -o moc_storage.cpp
 
 compiler_moc_source_make_all:
 compiler_moc_source_clean:
@@ -877,8 +954,22 @@ main.o: ../main.cpp ../../../Qt5.8.0/5.8/gcc_64/include/QtWidgets/QApplication \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QMetaType \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtNetwork/QTcpSocket \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtNetwork/qtcpsocket.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QSemaphore \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qsemaphore.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QQueue \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qqueue.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtGui/QList \
-		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QHash
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QTimer \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qtimer.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qbasictimer.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QHash \
+		../database.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtSql/QSqlDatabase \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtWidgets/QMessageBox \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtWidgets/qmessagebox.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtWidgets/qdialog.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtSql/QSqlError \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtSql/qsqlerror.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o ../main.cpp
 
 network.o: ../network.cpp ../network.h \
@@ -962,6 +1053,10 @@ network.o: ../network.cpp ../network.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QMetaType \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtNetwork/QTcpSocket \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtNetwork/qtcpsocket.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QSemaphore \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qsemaphore.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QQueue \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qqueue.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtGui/QList \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtGui/qevent.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtGui/qtguiglobal.h \
@@ -979,11 +1074,75 @@ network.o: ../network.cpp ../network.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qfiledevice.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtGui/qvector2d.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtGui/qtouchdevice.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QTimer \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qtimer.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qbasictimer.h \
 		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QHash
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o network.o ../network.cpp
 
+storage.o: ../storage.cpp ../storage.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QThread \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qthread.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qobject.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qobjectdefs.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qnamespace.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qglobal.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qconfig-bootstrapped.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qconfig.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qtcore-config.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qsystemdetection.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qprocessordetection.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qcompilerdetection.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qtypeinfo.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qsysinfo.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qlogging.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qflags.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qtypetraits.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qatomic.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qbasicatomic.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qgenericatomic.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qatomic_cxx11.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qatomic_msvc.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qglobalstatic.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qmutex.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qnumeric.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qversiontagging.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qstring.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qchar.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qbytearray.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qrefcount.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qarraydata.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qstringbuilder.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qlist.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qalgorithms.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qiterator.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qhashfunctions.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qpair.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qbytearraylist.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qstringlist.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qregexp.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qstringmatcher.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qcoreevent.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qscopedpointer.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qmetatype.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qvarlengtharray.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qcontainerfwd.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qobject_impl.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QString \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QByteArray \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QSemaphore \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qsemaphore.h \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/QQueue \
+		../../../Qt5.8.0/5.8/gcc_64/include/QtCore/qqueue.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o storage.o ../storage.cpp
+
 moc_network.o: moc_network.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_network.o moc_network.cpp
+
+moc_storage.o: moc_storage.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_storage.o moc_storage.cpp
 
 ####### Install
 

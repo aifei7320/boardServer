@@ -7,19 +7,18 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <string.h>
 using namespace std;
 
 #include "network.h"
 
 QSemaphore readSema(0);
 QSemaphore writeSema(100);
-QQueue<QByteArray> resource;
+QVector<struct boardInfo*> resource;
 
 Network::Network(QObject *parent) : QObject(parent),
     phoneServer(new QTcpServer)
 {
-    QString str("192.168.0.168:8000@1234");
-    qDebug()<<str.indexOf(":")<<str.left(str.indexOf(":"))<<str.mid(str.indexOf(":") + 1, str.indexOf("@") - str.indexOf(":") - 1);
     init();
 }
 
@@ -34,7 +33,7 @@ void Network::init()
         mcuTcpSocketList[i]->connectToHost("192.168.0.32", 4000 + i);
         connect(mcuTcpSocketList[i], SIGNAL(error(QAbstractSocket::SocketError)),
                 this, SLOT(networkError(QAbstractSocket::SocketError)));
-        connect(mcuTcpSocketList[i], SIGNAL(readyRead()), this, SLOT(readMCUData()));
+        connect(mcuTcpSocketList[i], SIGNAL(readyRead()), this, SLOT(readData()));
 
         qDebug()<<"create socket";
     }
@@ -105,20 +104,9 @@ void Network::errorOccur(QAbstractSocket::SocketError err)
     qDebug()<<tcp->objectName()<<err;
 }
 
-void Network::readMCUData()
+void Network::readData()
 {
-    struct boardInfo m;
-    m.width = 650;
-    m.length = 952;
-    m.serialNum = "";
-    m.total = 1000;
-    m.ngcount = 5;
-    m.okcount = 995;
-    m.lengthMatch = 0;
-    m.widthMatch = 0;
-    m.boardPerfect = 0;
-    qDebug()<<m.serialNum;
-
+    struct boardInfo *storage;
     QTcpSocket *tcp=NULL;
     quint8 header;
     QByteArray info;
@@ -126,20 +114,29 @@ void Network::readMCUData()
     tcp = static_cast<QTcpSocket*>(sender());
     QDataStream in(tcp);
     in >> header;
-    if (header != 'M'){
+    if (header != 'H'){
         tcp->readAll();
         return;
     }
-    while(tcp->bytesAvailable()<25);
-    info = tcp->read(25);
-    qDebug()<< info<<tcp->objectName();
+    while(tcp->bytesAvailable()<29);
+    info = tcp->read(29);
     dev = tcp->objectName().toInt();
-    writeSema.release();
+    storage = new struct boardInfo;
+
+
+    storage->serialNum = info.left(info.indexOf('s')); 
+    storage->width = info.mid(info.lastIndexOf('s') + 1, info.indexOf('w') - info.lastIndexOf('s') - 1).toInt();
+    storage->length = info.mid(info.lastIndexOf('w') + 1, info.indexOf('l') - info.lastIndexOf('w') - 1).toInt();
+    storage->boardPerfect = info.at(28) - 0x30;
+    storage->devNum = dev;
+
+    writeSema.acquire();
+    resource.append(storage);
+    readSema.release();
     if(socketHashTable[dev] != NULL){
         socketHashTable[dev]->write(info);
-        //QDataStream out(socketHashTable[dev]);
-        //out<< m;
-        qDebug()<< info<<tcp->objectName();
+        QDataStream out(socketHashTable[dev]);
+        out<<storage;
     }
 }
 
