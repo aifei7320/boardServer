@@ -12,7 +12,7 @@ using namespace std;
 #include <QApplication>
 #include "network.h"
 #include "database.h"
-#include "storage.h"
+#include "devicelist.h"
 
 int main(int argc, char* argv[])
 {
@@ -24,8 +24,8 @@ int main(int argc, char* argv[])
     }
     qRegisterMetaType<boardInfo>();
     Network network;
-    Storage storage;
-    storage.start();
+    DeviceList dl;
+    dl.show();
     app.quitOnLastWindowClosed();
     return app.exec();
 }

@@ -16,11 +16,24 @@ QSemaphore readSema(0);
 QSemaphore writeSema(100);
 QVector<struct boardInfo*> resource;
 
+extern QSqlDatabase mySqlDb;
+
 Network::Network(QObject *parent) : QObject(parent),
     phoneServer(new QTcpServer)
 {
+    storage = new Storage;
+    storage->start();
     init();
     timer = new QTimer;
+}
+
+Network::~Network()
+{
+    mcuTcpSocketList.clear();
+    socketHashTable.clear();
+    storage->stop();
+    storage->deleteLater();
+    delete timer;
 }
 
 void Network::init()
@@ -28,6 +41,21 @@ void Network::init()
     phoneServer->listen(QHostAddress::Any, 7320);
     connect(phoneServer, SIGNAL(newConnection()), this, SLOT(establishNewConnection()));
 
+    QSqlQuery query(mySqlDb);
+    query.exec("select ip, port, devNum from deviceList");
+#if 1
+    int count = 0;
+    while(query.next()){
+        mcuTcpSocketList.append(new QTcpSocket);
+        mcuTcpSocketList[count]->setObjectName(query.value(2).toString());
+        mcuTcpSocketList[count]->connectToHost(query.value(0).toString(), query.value(1).toInt());
+        connect(mcuTcpSocketList[count], SIGNAL(error(QAbstractSocket::SocketError)),
+                this, SLOT(networkError(QAbstractSocket::SocketError)));
+        connect(mcuTcpSocketList[count], SIGNAL(readyRead()), this, SLOT(readData()));
+        qDebug()<<"create socket";
+        count++;
+    }
+#else
     for (int i = 0; i < 16; ++i){
         mcuTcpSocketList.append(new QTcpSocket);
         mcuTcpSocketList[i]->setObjectName(QString::number(i));
@@ -38,6 +66,7 @@ void Network::init()
 
         qDebug()<<"create socket";
     }
+#endif
 }
 
 void Network::establishNewConnection()
@@ -158,7 +187,6 @@ void Network::networkError(QAbstractSocket::SocketError err)
         case 1:{
                 qDebug()<<tcp->objectName()<<err;
                     
-                timer->singleShot(2000, this, SLOT(reConn()));
                     break;
                 }
         case 2:{

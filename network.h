@@ -1,8 +1,8 @@
 /*************************************************************************
-    > File Name: network.h
-    > Author: zxf
-    > Mail: zhengxiaofeng333@163.com 
-    > Created Time: 2017年02月21日 星期二 13时32分24秒
+  > File Name: network.h
+  > Author: zxf
+  > Mail: zhengxiaofeng333@163.com 
+  > Created Time: 2017年02月21日 星期二 13时32分24秒
  ************************************************************************/
 
 #ifndef _NETWORK_H_
@@ -29,28 +29,16 @@ using namespace std;
 #include <QVector>
 #include <QList>
 #include <QTimer>
+#include <QSqlQuery>
 #include <QHash>
-
-struct boardInfo{
-    qint32 magicNum = -1;
-    QString serialNum;
-    qint16 length = -1;
-    qint16 width = -1;
-    qint32 total = -1;
-    qint32 ngcount = -1;
-    qint32 okcount = -1;
-    qint8 lengthMatch = -1;
-    qint8 widthMatch = -1;
-    qint8 boardPerfect = -1;
-    qint16 devNum = -1;
-};
-Q_DECLARE_METATYPE(boardInfo)
+#include "storage.h"
 
 class Network : public QObject
 {
     Q_OBJECT
     public:
         explicit Network(QObject *parent=0);
+        ~Network();
 
     private:
         QList<QTcpSocket *> mcuTcpSocketList;
@@ -59,11 +47,12 @@ class Network : public QObject
 
         QTcpSocket *transferSocket;
         QTimer *timer;
+        Storage *storage;
     private:
         void init();
 
-    private Q_SLOTS:
-        void readData();
+        private Q_SLOTS:
+            void readData();
         void getPhoneInfo();
         void establishNewConnection();
         void errorOccur(QAbstractSocket::SocketError);
@@ -73,7 +62,7 @@ class Network : public QObject
         void tcpStateChanged(QAbstractSocket::SocketState);
         void testConnection();
         void reConn();
-    
+
 };
 
 inline QDataStream &operator<<(QDataStream &out, const struct boardInfo &board)

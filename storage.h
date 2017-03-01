@@ -14,11 +14,25 @@
 #include <QVector>
 #include <QSqlQuery>
 #include <QDebug>
-#include "network.h"
 #include <QSqlError>
 
 #include <iostream>
 #include <unistd.h>
+
+struct boardInfo{
+    qint32 magicNum = -1;
+    QString serialNum;
+    qint16 length = -1;
+    qint16 width = -1;
+    qint32 total = -1;
+    qint32 ngcount = -1;
+    qint32 okcount = -1;
+    qint8 lengthMatch = -1;
+    qint8 widthMatch = -1;
+    qint8 boardPerfect = -1;
+    qint16 devNum = -1;
+};
+Q_DECLARE_METATYPE(boardInfo)
 
 typedef struct boardInfo page;
 using namespace std;
@@ -37,6 +51,8 @@ protected:
 private:
 
     bool stopRunning;
+private Q_SLOTS:
+    void deletethis();
 };
 
 

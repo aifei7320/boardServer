@@ -11,7 +11,9 @@ QT += core network sql widgets
 # Input
 HEADERS +=  network.h \
             database.h \  
+            devicelist.h \
             storage.h
 SOURCES +=  main.cpp \
             network.cpp \
+            devicelist.cpp \
             storage.cpp

@@ -18,7 +18,7 @@ extern QSqlDatabase mySqlDb;
 Storage::Storage(QObject *parent) : QThread(parent),
     stopRunning(true)
 {
-        
+    connect(this, SIGNAL(destoryed(QObject*)), this, SLOT(deletethis())) ;       
 }
 
 void Storage::run()
@@ -37,8 +37,15 @@ void Storage::run()
             query.bindValue(":length", storage->length);
             query.bindValue(":boardPerfect", storage->boardPerfect);
             query.exec();
-            delete storage;
+            if (storage != NULL)
+                delete storage;
         }
         sleep(2);
     }
+}
+
+void Storage::deletethis()
+{
+    qDebug()<<"delete";
+    this->stop();
 }
