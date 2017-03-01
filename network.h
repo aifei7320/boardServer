@@ -72,6 +72,7 @@ class Network : public QObject
         void deleteTransferSocket();
         void tcpStateChanged(QAbstractSocket::SocketState);
         void testConnection();
+        void reConn();
     
 };
 
@@ -81,6 +82,15 @@ inline QDataStream &operator<<(QDataStream &out, const struct boardInfo &board)
     out<< 123456<< board.serialNum<< board.length<< board.width<<
         board.total<< board.ngcount<< board.okcount<< board.lengthMatch<<
         board.widthMatch<< board.boardPerfect;
+    return out;
+}
+
+inline QDataStream &operator<<(QDataStream &out, const struct boardInfo *&board)
+{
+    out.setVersion(QDataStream::Qt_5_0);
+    out<< 123456<< board->serialNum<< board->length<< board->width<<
+        board->total<< board->ngcount<< board->okcount<< board->lengthMatch<<
+        board->widthMatch<< board->boardPerfect;
     return out;
 }
 
@@ -98,4 +108,17 @@ inline QDataStream &operator>>(QDataStream &in, struct boardInfo &board)
     return in;
 }
 
+inline QDataStream &operator>>(QDataStream &in, struct boardInfo *&board)
+{
+    in.setVersion(QDataStream::Qt_5_0);
+    in>> board->magicNum;
+    if (board->magicNum != 123456){
+        board->magicNum = 0;
+        return in;
+    }
+    in>>board->serialNum>> board->length>> board->width>>
+        board->total>> board->ngcount>> board->okcount>> board->lengthMatch>>
+        board->widthMatch>> board->boardPerfect;
+    return in;
+}
 #endif

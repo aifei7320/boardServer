@@ -20,6 +20,7 @@ Network::Network(QObject *parent) : QObject(parent),
     phoneServer(new QTcpServer)
 {
     init();
+    timer = new QTimer;
 }
 
 void Network::init()
@@ -86,6 +87,14 @@ void Network::transferStateChanged(QAbstractSocket::SocketState state)
 
 }
 
+void Network::reConn()
+{
+    for (int i = 0; i < 16; ++i){
+        mcuTcpSocketList[i]->connectToHost("192.168.0.32", 4000 + i);
+    }
+
+}
+
 void Network::deleteTransferSocket()
 {
     QTcpSocket *tcp = static_cast<QTcpSocket*>(sender());
@@ -122,11 +131,11 @@ void Network::readData()
     info = tcp->read(29);
     dev = tcp->objectName().toInt();
     storage = new struct boardInfo;
-
+    qDebug()<<info;
 
     storage->serialNum = info.left(info.indexOf('s')); 
-    storage->width = info.mid(info.lastIndexOf('s') + 1, info.indexOf('w') - info.lastIndexOf('s') - 1).toInt();
-    storage->length = info.mid(info.lastIndexOf('w') + 1, info.indexOf('l') - info.lastIndexOf('w') - 1).toInt();
+    storage->length = info.mid(info.lastIndexOf('s') + 1, info.indexOf('L') - info.lastIndexOf('s') - 1).toInt();
+    storage->width = info.mid(info.lastIndexOf('L') + 1, info.indexOf('W') - info.lastIndexOf('L') - 1).toInt();
     storage->boardPerfect = info.at(28) - 0x30;
     storage->devNum = dev;
 
@@ -134,9 +143,10 @@ void Network::readData()
     resource.append(storage);
     readSema.release();
     if(socketHashTable[dev] != NULL){
-        socketHashTable[dev]->write(info);
+        //socketHashTable[dev]->write(info);
         QDataStream out(socketHashTable[dev]);
-        out<<storage;
+        out<<*storage;
+        qDebug()<<storage->width<< storage->length<< storage->serialNum<< storage->total;
     }
 }
 
@@ -147,7 +157,8 @@ void Network::networkError(QAbstractSocket::SocketError err)
     switch (tcp->objectName().toInt()){
         case 1:{
                 qDebug()<<tcp->objectName()<<err;
-
+                    
+                timer->singleShot(2000, this, SLOT(reConn()));
                     break;
                 }
         case 2:{
