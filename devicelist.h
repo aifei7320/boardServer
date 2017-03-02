@@ -69,17 +69,19 @@ class MyDelegate : public QItemDelegate
 public:
     MyDelegate(QObject *parent = 0):QItemDelegate(parent){ }
 
-    QWidget *createEditor(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const
+    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
     {
-        Q_UNUSED(editor)
         Q_UNUSED(option)
         Q_UNUSED(index)
-        QRegularExpression re("((?:(?:25[0-5]|2[0-4]\\d|((1\\d{2})|([1-9]?\\d)))\\.){3}(?:25[0-5]|2[0-4]\\d|((1\\d{2})|([1-9]?\\d))))");
-        QValidator *va = new QRegularExpressionValidator(re, NULL);
-        QLineEdit *lineEdit = new QLineEdit;
-        lineEdit->setValidator(va);
-        lineEdit->setWindowFlags(Qt::FramelessWindowHint);
-        lineEdit->setFrame(false);
+            QRegularExpression re("((?:(?:25[0-5]|2[0-4]\\d|((1\\d{2})|([1-9]?\\d)))\\.){3}(?:25[0-5]|2[0-4]\\d|((1\\d{2})|([1-9]?\\d))))");
+            QValidator *va = new QRegularExpressionValidator(re, NULL);
+            QLineEdit *lineEdit = new QLineEdit(parent);
+            lineEdit->setValidator(va);
+            lineEdit->setWindowFlags(Qt::FramelessWindowHint);
+            lineEdit->setFrame(false);
+        if (index.column() == 2){
+            lineEdit->setPlaceholderText("192.168.0.1");
+        } 
         return lineEdit;
     }
     void setEditorData(QWidget *editor, const QModelIndex &index) const

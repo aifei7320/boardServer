@@ -101,5 +101,4 @@ void DeviceList::on_submitButton_clicked()
 {
     tableModel->select();
     qDebug()<<tableModel->lastError();
-    emit deviceAdded("");
 }

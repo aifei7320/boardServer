@@ -18,7 +18,6 @@ extern QSqlDatabase mySqlDb;
 Storage::Storage(QObject *parent) : QThread(parent),
     stopRunning(true)
 {
-    connect(this, SIGNAL(destoryed(QObject*)), this, SLOT(deletethis())) ;       
 }
 
 void Storage::run()
