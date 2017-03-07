@@ -16,7 +16,7 @@ QSemaphore readSema(0);
 QSemaphore writeSema(100);
 QVector<struct boardInfo*> resource;
 
-extern QSqlDatabase mySqlDb;
+//extern QSqlDatabase mySqlDb;
 
 Network::Network(QObject *parent) : QObject(parent),
     phoneServer(new QTcpServer)
@@ -41,7 +41,7 @@ void Network::init()
     phoneServer->listen(QHostAddress::Any, 7320);
     connect(phoneServer, SIGNAL(newConnection()), this, SLOT(establishNewConnection()));
 
-    QSqlQuery query(mySqlDb);
+    QSqlQuery query;
     query.exec("select ip, port, devNum from deviceList");
 #if 1
     int count = 0;
@@ -51,7 +51,7 @@ void Network::init()
         mcuTcpSocketList[count]->connectToHost(query.value(0).toString(), query.value(1).toInt());
         connect(mcuTcpSocketList[count], SIGNAL(error(QAbstractSocket::SocketError)),
                 this, SLOT(networkError(QAbstractSocket::SocketError)));
-        connect(mcuTcpSocketList[count], SIGNAL(readyRead()), this, SLOT(readData()));
+        connect(mcuTcpSocketList[count], SIGNAL(readyRead()), this, SLOT(readDoubleData()));
         qDebug()<<"create socket";
         count++;
     }
@@ -98,8 +98,8 @@ void Network::getPhoneInfo()
     ip = ip.right(ip.size() - ip.lastIndexOf(":") - 1);
     port = phoneInfo.left(phoneInfo.indexOf("@")).toInt();
     dev = phoneInfo.right(phoneInfo.size() - phoneInfo.indexOf("@") - 1).toInt();
-    qDebug()<<ip<<port<<dev;
-    qDebug()<<"peer ip"<<transferSocket->peerAddress().toString();
+    //qDebug()<<ip<<port<<dev;
+    //qDebug()<<"peer ip"<<transferSocket->peerAddress().toString();
     QTcpSocket *tcp = new QTcpSocket;
     tcp->setObjectName(QString::number(dev));
     tcp->connectToHost(ip, port);
@@ -142,6 +142,63 @@ void Network::errorOccur(QAbstractSocket::SocketError err)
     qDebug()<<tcp->objectName()<<err;
 }
 
+void Network::readDoubleData()
+{
+    struct boardInfo *storage;
+    QTcpSocket *tcp=NULL;
+    quint8 header;
+    QByteArray temp,info;
+    quint8 dev;
+    tcp = static_cast<QTcpSocket*>(sender());
+    QDataStream in(tcp);
+    in >> header>>header;
+    if (header != 'R'){
+        tcp->readAll();
+        return;
+    }
+    while(tcp->bytesAvailable()<58);
+    temp = tcp->read(58);
+    dev = tcp->objectName().toInt();
+    storage = new struct boardInfo;
+    qDebug()<<temp;
+
+    /* RsssssssssssssssLLLLLWWWWWeeee
+     * R+15*s+5*L+5*W+4*e
+     * R数据识别位
+     * s条码，
+     * L长度
+     * W宽度
+     * e是extra边缘检测等
+     * */
+    for (int i = 0; i < 58; ++i) {
+        info += temp[(2 * i)];
+    }
+
+    storage->serialNum = info.left(info.indexOf('s')); 
+    storage->length = info.mid(info.lastIndexOf('s') + 1, info.indexOf('L') - info.lastIndexOf('s') - 1).toInt();
+    storage->width = info.mid(info.lastIndexOf('L') + 1, info.indexOf('W') - info.lastIndexOf('L') - 1).toInt();
+    storage->boardPerfect = info.at(28) == 'e' ? 0 : info.at(28) - 0x30;
+    storage->devNum = dev;
+    QSqlQuery query;
+    query.exec(QString("select width, length from detail_information where serial_num ='%1|';").arg(storage->serialNum));
+    query.next();
+    storage->realWidth = query.value(0).toDouble();
+    storage->realLength = query.value(1).toDouble();
+    storage->widthMatch = qAbs(storage->width - storage->realWidth) >= 1 ? 0 : 1;
+    storage->lengthMatch = qAbs(storage->length - storage->realLength) >= 1 ? 0 : 1;
+
+        qDebug()<<storage->boardPerfect<< storage->width<< storage->length<< storage->serialNum<< storage->total<< storage->realWidth<<storage->realLength<<storage->widthMatch;
+    writeSema.acquire();
+    resource.append(storage);
+    readSema.release();
+    if(socketHashTable[dev] != NULL){
+        //socketHashTable[dev]->write(info);
+        QDataStream out(socketHashTable[dev]);
+        out<<*storage;
+        qDebug()<<storage->width<< storage->length<< storage->serialNum<< storage->total<< storage->realWidth<<storage->realLength<<storage->widthMatch;
+    }
+}
+
 void Network::readData()
 {
     struct boardInfo *storage;
@@ -152,7 +209,7 @@ void Network::readData()
     tcp = static_cast<QTcpSocket*>(sender());
     QDataStream in(tcp);
     in >> header;
-    if (header != 'H'){
+    if (header != 'R'){
         tcp->readAll();
         return;
     }
@@ -162,11 +219,27 @@ void Network::readData()
     storage = new struct boardInfo;
     qDebug()<<info;
 
+    /* RsssssssssssssssLLLLLWWWWWeeee
+     * R+15*s+5*L+5*W+4*e
+     * R数据识别位
+     * s条码，
+     * L长度
+     * W宽度
+     * e是extra边缘检测等
+     * */
+
     storage->serialNum = info.left(info.indexOf('s')); 
     storage->length = info.mid(info.lastIndexOf('s') + 1, info.indexOf('L') - info.lastIndexOf('s') - 1).toInt();
     storage->width = info.mid(info.lastIndexOf('L') + 1, info.indexOf('W') - info.lastIndexOf('L') - 1).toInt();
     storage->boardPerfect = info.at(28) - 0x30;
     storage->devNum = dev;
+    QSqlQuery query;
+    query.exec(QString("select width, length from detail_information where serial_num ='%1|';").arg(storage->serialNum));
+    query.next();
+    storage->realWidth = query.value(0).toDouble();
+    storage->realLength = query.value(1).toDouble();
+    storage->widthMatch = qAbs(storage->width - storage->realWidth) >= 1 ? 0 : 1;
+    storage->lengthMatch = qAbs(storage->length - storage->realLength) >= 1 ? 0 : 1;
 
     writeSema.acquire();
     resource.append(storage);
@@ -175,7 +248,7 @@ void Network::readData()
         //socketHashTable[dev]->write(info);
         QDataStream out(socketHashTable[dev]);
         out<<*storage;
-        qDebug()<<storage->width<< storage->length<< storage->serialNum<< storage->total;
+        qDebug()<<storage->width<< storage->length<< storage->serialNum<< storage->total<< storage->realWidth<<storage->realLength<<storage->widthMatch;
     }
 }
 

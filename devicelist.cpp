@@ -10,7 +10,7 @@
 #include "devicelist.h"
 using namespace std;
 
-extern QSqlDatabase mySqlDb;
+//extern QSqlDatabase mySqlDb;
 
 DeviceList::DeviceList(QWidget *parent) : QWidget(parent)
 {
@@ -82,7 +82,7 @@ void DeviceList::configTableModel()
 
 void DeviceList::on_addButton_clicked()
 {
-    QSqlQuery query(mySqlDb);
+    QSqlQuery query;
     query.exec("insert into deviceList (name) values('')");
     tableModel->select();
     QScrollBar *bar = tableView->verticalScrollBar();
@@ -92,7 +92,7 @@ void DeviceList::on_addButton_clicked()
 
 void DeviceList::on_deleteButton_clicked()
 {
-    QSqlQuery query(mySqlDb);
+    QSqlQuery query;
     QModelIndex current = tableView->currentIndex();
     query.exec(QString("delete from deviceList where id = %1").arg(current.sibling(current.row(), 0).data().toInt()));
     tableModel->select();

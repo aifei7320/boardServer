@@ -24,6 +24,8 @@ struct boardInfo{
     QString serialNum;
     qint16 length = -1;
     qint16 width = -1;
+    qreal realWidth = 0.0;
+    qreal realLength = 0.0;
     qint32 total = -1;
     qint32 ngcount = -1;
     qint32 okcount = -1;

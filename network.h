@@ -24,6 +24,7 @@ using namespace std;
 #include <QDataStream>
 #include <QMetaType>
 #include <QTcpSocket>
+#include <QSqlError>
 #include <QSemaphore>
 #include <QQueue>
 #include <QVector>
@@ -52,7 +53,8 @@ class Network : public QObject
         void init();
 
         private Q_SLOTS:
-            void readData();
+        void readData();
+        void readDoubleData();
         void getPhoneInfo();
         void establishNewConnection();
         void errorOccur(QAbstractSocket::SocketError);
@@ -69,15 +71,15 @@ inline QDataStream &operator<<(QDataStream &out, const struct boardInfo &board)
 {
     out.setVersion(QDataStream::Qt_5_0);
     out<< 123456<< board.serialNum<< board.length<< board.width<<
-        board.total<< board.ngcount<< board.okcount<< board.lengthMatch<<
-        board.widthMatch<< board.boardPerfect;
+        board.realWidth<< board.realLength << board.total<< board.ngcount<<
+        board.okcount<< board.lengthMatch<< board.widthMatch<< board.boardPerfect;
     return out;
 }
 
 inline QDataStream &operator<<(QDataStream &out, const struct boardInfo *&board)
 {
     out.setVersion(QDataStream::Qt_5_0);
-    out<< 123456<< board->serialNum<< board->length<< board->width<<
+    out<< 123456<< board->serialNum<< board->length<< board->width<< board->realWidth<< board->realLength<<
         board->total<< board->ngcount<< board->okcount<< board->lengthMatch<<
         board->widthMatch<< board->boardPerfect;
     return out;

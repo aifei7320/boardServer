@@ -15,10 +15,10 @@ using namespace std;
 #include <QMessageBox>
 #include <QSqlError>
 
-QSqlDatabase mySqlDb;
+//QSqlDatabase mySqlDb;
 static bool connectToDatabase()
 {
-    mySqlDb = QSqlDatabase::addDatabase("QMYSQL");
+    QSqlDatabase mySqlDb = QSqlDatabase::addDatabase("QMYSQL");
     mySqlDb.setHostName("localhost");
     mySqlDb.setDatabaseName("boardInfo");
     mySqlDb.setUserName("root");
