@@ -16,6 +16,8 @@ using namespace std;
 
 
 #include <QTcpServer>
+#include <QMutex>
+#include <QWaitCondition>
 #include <QString>
 #include <QByteArray>
 #include <QDebug>
@@ -28,6 +30,7 @@ using namespace std;
 #include <QSemaphore>
 #include <QQueue>
 #include <QVector>
+#include <QMessageBox>
 #include <QList>
 #include <QTimer>
 #include <QSqlQuery>
@@ -42,7 +45,7 @@ class Network : public QObject
         ~Network();
 
     private:
-        QList<QTcpSocket *> mcuTcpSocketList;
+        QHash<qint32, QTcpSocket *> mcuTcpSocketList;
         QTcpServer *phoneServer;
         QHash<qint32, QTcpSocket*> socketHashTable;
 
@@ -62,7 +65,7 @@ class Network : public QObject
         void networkError(QAbstractSocket::SocketError);
         void deleteTransferSocket();
         void tcpStateChanged(QAbstractSocket::SocketState);
-        void testConnection();
+        void connectionStateChanged(QAbstractSocket::SocketState);
         void reConn();
 
 };

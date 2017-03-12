@@ -14,6 +14,8 @@
 #include <QVector>
 #include <QSqlQuery>
 #include <QDebug>
+#include <QMutex>
+#include <QWaitCondition>
 #include <QSqlError>
 
 #include <iostream>
@@ -22,8 +24,8 @@
 struct boardInfo{
     qint32 magicNum = -1;
     QString serialNum;
-    qint16 length = -1;
-    qint16 width = -1;
+    qreal length = -1;
+    qreal width = -1;
     qreal realWidth = 0.0;
     qreal realLength = 0.0;
     qint32 total = -1;

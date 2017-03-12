@@ -14,6 +14,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QString>
+#include <QRect>
 #include <QPushButton>
 #include <iostream>
 #include <QRegExp>

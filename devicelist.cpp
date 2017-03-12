@@ -45,6 +45,7 @@ DeviceList::DeviceList(QWidget *parent) : QWidget(parent)
     mainLayout->addLayout(buttonLayout);
 
     setLayout(mainLayout);
+    resize(contentsRect().width(), contentsRect().height());
 }
 
 DeviceList::~DeviceList()
@@ -64,6 +65,7 @@ void DeviceList::configTableView()
     tableView->setGridStyle(Qt::SolidLine);
     tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     tableView->setItemDelegateForColumn(2, my);
+    tableView->setAlternatingRowColors(true);
     tableView->hideColumn(0);
 }
 

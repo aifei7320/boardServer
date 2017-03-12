@@ -13,6 +13,9 @@ using namespace std;
 extern QSemaphore readSema;
 extern QSemaphore writeSema;
 extern QVector<struct boardInfo*> resource;
+
+extern QMutex mutex;
+extern QWaitCondition waitCondition;
 //extern QSqlDatabase mySqlDb;
 
 Storage::Storage(QObject *parent) : QThread(parent),
@@ -26,6 +29,8 @@ void Storage::run()
     while(stopRunning){
         while(readSema.available() > 0){
 
+            mutex.lock();
+            waitCondition.wait(&mutex);
             readSema.acquire();
             page *storage = resource.takeFirst();
             writeSema.release();
@@ -38,8 +43,8 @@ void Storage::run()
             query.bindValue(":realWidth", storage->realWidth);
             query.bindValue(":realLength", storage->realLength);
             query.bindValue(":boardPerfect", storage->boardPerfect);
-            qDebug()<< query.lastError();
             query.exec();
+            mutex.unlock();
             if (storage != NULL)
                 delete storage;
             }

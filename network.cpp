@@ -16,6 +16,9 @@ QSemaphore readSema(0);
 QSemaphore writeSema(100);
 QVector<struct boardInfo*> resource;
 
+QMutex mutex;
+QWaitCondition waitCondition;
+
 //extern QSqlDatabase mySqlDb;
 
 Network::Network(QObject *parent) : QObject(parent),
@@ -42,18 +45,19 @@ void Network::init()
     connect(phoneServer, SIGNAL(newConnection()), this, SLOT(establishNewConnection()));
 
     QSqlQuery query;
+    qint32 devNum;
     query.exec("select ip, port, devNum from deviceList");
 #if 1
-    int count = 0;
     while(query.next()){
-        mcuTcpSocketList.append(new QTcpSocket);
-        mcuTcpSocketList[count]->setObjectName(query.value(2).toString());
-        mcuTcpSocketList[count]->connectToHost(query.value(0).toString(), query.value(1).toInt());
-        connect(mcuTcpSocketList[count], SIGNAL(error(QAbstractSocket::SocketError)),
+        devNum = query.value(2).toInt();
+        mcuTcpSocketList.insert(query.value(2).toInt(), new QTcpSocket);
+        mcuTcpSocketList[devNum]->setObjectName(QString::number(devNum));
+        mcuTcpSocketList[devNum]->connectToHost(query.value(0).toString(), query.value(1).toInt());
+        connect(mcuTcpSocketList[devNum], SIGNAL(error(QAbstractSocket::SocketError)),
                 this, SLOT(networkError(QAbstractSocket::SocketError)));
-        connect(mcuTcpSocketList[count], SIGNAL(readyRead()), this, SLOT(readDoubleData()));
+        connect(mcuTcpSocketList[devNum], SIGNAL(readyRead()), this, SLOT(readDoubleData()));
+        connect(mcuTcpSocketList[devNum], SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(connectionStateChanged(QAbstractSocket::SocketState)));
         qDebug()<<"create socket";
-        count++;
     }
 #else
     for (int i = 0; i < 16; ++i){
@@ -118,10 +122,15 @@ void Network::transferStateChanged(QAbstractSocket::SocketState state)
 
 void Network::reConn()
 {
+#if 0
+    for (int i = 0; i < 16; ++i){
+        mcuTcpSocketList[i]->disconnectFromHost();
+    }
+
     for (int i = 0; i < 16; ++i){
         mcuTcpSocketList[i]->connectToHost("192.168.0.32", 4000 + i);
     }
-
+#endif
 }
 
 void Network::deleteTransferSocket()
@@ -156,8 +165,8 @@ void Network::readDoubleData()
         tcp->readAll();
         return;
     }
-    while(tcp->bytesAvailable()<58);
-    temp = tcp->read(58);
+    while(tcp->bytesAvailable()<66);
+    temp = tcp->read(66);
     dev = tcp->objectName().toInt();
     storage = new struct boardInfo;
     qDebug()<<temp;
@@ -170,32 +179,40 @@ void Network::readDoubleData()
      * W宽度
      * e是extra边缘检测等
      * */
-    for (int i = 0; i < 58; ++i) {
+    for (int i = 0; i < 66; ++i) {
         info += temp[(2 * i)];
     }
 
+    info.resize(33);
+    qDebug()<<"info"<<info;
     storage->serialNum = info.left(info.indexOf('s')); 
-    storage->length = info.mid(info.lastIndexOf('s') + 1, info.indexOf('L') - info.lastIndexOf('s') - 1).toInt();
-    storage->width = info.mid(info.lastIndexOf('L') + 1, info.indexOf('W') - info.lastIndexOf('L') - 1).toInt();
-    storage->boardPerfect = info.at(28) == 'e' ? 0 : info.at(28) - 0x30;
+    storage->length = info.mid(info.lastIndexOf('s') + 1, info.indexOf('L') - info.lastIndexOf('s') - 1).toDouble();
+    storage->width = info.mid(info.lastIndexOf('L') + 1, info.indexOf('W') - info.lastIndexOf('L') - 1).toDouble();
+    storage->boardPerfect = info.at(32) == 'e' ? 'e' : info.at(32) - 0x30;
     storage->devNum = dev;
+    mutex.lock();
     QSqlQuery query;
     query.exec(QString("select width, length from detail_information where serial_num ='%1|';").arg(storage->serialNum));
-    query.next();
-    storage->realWidth = query.value(0).toDouble();
-    storage->realLength = query.value(1).toDouble();
-    storage->widthMatch = qAbs(storage->width - storage->realWidth) >= 1 ? 0 : 1;
-    storage->lengthMatch = qAbs(storage->length - storage->realLength) >= 1 ? 0 : 1;
+    if (query.next()){
+        storage->realWidth = query.value(0).toDouble();
+        storage->realLength = query.value(1).toDouble();
+    } else {
+        storage->realWidth = 0;
+        storage->realLength = 0;
+    }
+    storage->widthMatch = qAbs(storage->width - storage->realWidth) >= 1 ? 0x00 : 0x01;
+    storage->lengthMatch = qAbs(storage->length - storage->realLength) >= 1 ? 0x00 : 0x01;
 
-        qDebug()<<storage->boardPerfect<< storage->width<< storage->length<< storage->serialNum<< storage->total<< storage->realWidth<<storage->realLength<<storage->widthMatch;
     writeSema.acquire();
     resource.append(storage);
     readSema.release();
+    waitCondition.wakeAll();
+    mutex.unlock();
     if(socketHashTable[dev] != NULL){
         //socketHashTable[dev]->write(info);
         QDataStream out(socketHashTable[dev]);
         out<<*storage;
-        qDebug()<<storage->width<< storage->length<< storage->serialNum<< storage->total<< storage->realWidth<<storage->realLength<<storage->widthMatch;
+        qDebug()<<storage->width<< storage->length<< storage->serialNum<< storage->total<< storage->realWidth<<storage->realLength<<storage->widthMatch<< storage->boardPerfect ;
     }
 }
 
@@ -256,88 +273,24 @@ void Network::networkError(QAbstractSocket::SocketError err)
 {
     QTcpSocket *tcp;
     tcp = static_cast<QTcpSocket*>(sender());
-    switch (tcp->objectName().toInt()){
-        case 1:{
-                qDebug()<<tcp->objectName()<<err;
-                    
-                    break;
-                }
-        case 2:{
-                qDebug()<<tcp->objectName()<<err;
+    int dev = tcp->objectName().toInt();
+    mcuTcpSocketList[dev]->disconnectFromHost();
 
-                    break;
-                }
-        case 3:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-        case 4:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-        case 5:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-        case 6:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-        case 7:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-        case 8:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-        case 9:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-        case 10:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-        case 11:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-        case 12:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-        case 13:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-        case 14:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-        case 15:{
-                qDebug()<<tcp->objectName()<<err;
-
-                    break;
-                }
-
-    }
+    qDebug()<<err;
 }
 
-void Network::testConnection()
+void Network::connectionStateChanged(QAbstractSocket::SocketState ss)
 {
+    quint8 dev;
+    dev = static_cast<QTcpSocket*>(sender())->objectName().toInt();
+
+    qDebug()<<dev;
+    if (ss == QAbstractSocket::UnconnectedState){
+        mcuTcpSocketList[dev]->close();
+        
+        QMessageBox::warning(0, "连接错误", QString("不能连接到设备%1").arg(dev));
+    }
+    qDebug()<<mcuTcpSocketList[dev]->localAddress()<<mcuTcpSocketList[dev]->localPort();
 }
 
 void Network::tcpStateChanged(QAbstractSocket::SocketState s)
