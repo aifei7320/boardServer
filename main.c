@@ -51,14 +51,19 @@ int main(int argc, char *argv[])
         if(ret < 0)
             perror("select()\n");
         else {
-            ret = read(fd, buf, 1);
-            if (buf[0] == '$'){
+            ret = fread(buf, 7, sizeof(char), uart);
+            if (strstr(buf, "$GNRMC") != NULL){
+                fread(temp, 61, sizeof(char), uart);
+                if (strchr(temp, 'V'))
+                    continue;
+                strncat(buf, temp, 59);
+                printf("read:%s\n", buf);
                 memset(buf, 0, 100);
-                fread(buf, 100, sizeof(char), uart);
-                printf("read:%s", buf);
+                memset(temp, 0, 100);
             }
             //strncat(temp, buf, ret);
             //if ()
+            memset(buf, 0, 100);
         }
     }
    return 0;
